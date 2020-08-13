@@ -16,12 +16,14 @@ package types
 
 import (
 	"context"
+	"crypto/tls"
 	"io"
 	"time"
 
 	peerpb "github.com/cilium/cilium/api/v1/peer"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 // Client defines an interface that Peer service client should implement.
@@ -51,7 +53,8 @@ func (c *client) Close() error {
 // LocalClientBuilder is a ClientBuilder that is suitable when the gRPC
 // connection to the Peer service is local (typically a Unix Domain Socket).
 type LocalClientBuilder struct {
-	DialTimeout time.Duration
+	DialTimeout   time.Duration
+	DialTLSConfig *tls.Config
 }
 
 // Client implements ClientBuilder.Client.
@@ -59,7 +62,13 @@ func (b LocalClientBuilder) Client(target string) (Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), b.DialTimeout)
 	defer cancel()
 	// the connection is local so we assume WithInsecure() is safe in this context
-	conn, err := grpc.DialContext(ctx, target, grpc.WithInsecure(), grpc.WithBlock())
+	var secureDialOpt grpc.DialOption
+	if b.DialTLSConfig != nil {
+		secureDialOpt = grpc.WithTransportCredentials(credentials.NewTLS(b.DialTLSConfig))
+	} else {
+		secureDialOpt = grpc.WithInsecure()
+	}
+	conn, err := grpc.DialContext(ctx, target, secureDialOpt, grpc.WithBlock())
 	if err != nil {
 		return nil, err
 	}

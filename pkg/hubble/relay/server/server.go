@@ -58,7 +58,8 @@ func New(options ...Option) (*Server, error) {
 		pool.WithPeerServiceAddress(opts.hubbleTarget),
 		pool.WithPeerClientBuilder(
 			&peerTypes.LocalClientBuilder{
-				DialTimeout: opts.dialTimeout,
+				DialTimeout:   opts.dialTimeout,
+				DialTLSConfig: opts.dialTLSConfig,
 			},
 		),
 		pool.WithClientConnBuilder(pool.GRPCClientConnBuilder{

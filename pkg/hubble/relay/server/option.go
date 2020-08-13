@@ -15,6 +15,7 @@
 package server
 
 import (
+	"crypto/tls"
 	"strings"
 	"time"
 
@@ -26,6 +27,7 @@ import (
 type options struct {
 	hubbleTarget    string
 	dialTimeout     time.Duration
+	dialTLSConfig   *tls.Config
 	retryTimeout    time.Duration
 	listenAddress   string
 	debug           bool
@@ -122,6 +124,15 @@ func WithSortBufferDrainTimeout(d time.Duration) Option {
 func WithErrorAggregationWindow(d time.Duration) Option {
 	return func(o *options) error {
 		o.observerOptions = append(o.observerOptions, observer.WithErrorAggregationWindow(d))
+		return nil
+	}
+}
+
+// WithClientTLSConfig sets a client tls config for all proxying connections
+// to hubble.
+func WithClientTLSConfig(config *tls.Config) Option {
+	return func(o *options) error {
+		o.dialTLSConfig = config
 		return nil
 	}
 }
